@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1b2430">
+<meta name="description" content="Slide Puzzle Pro - jogo de puzzle deslizante">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Slide Puzzle Pro</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <button data-act="new" class="btn red">NOVO</button>
+    <button data-act="settings" class="btn red">AJUSTES</button>
+    <button data-act="records" class="btn red">RECORDES</button>
+    <button data-act="pause" id="pauseBtn" class="btn red">PAUSA</button>
+  </header>
+  <section class="info">
+    <div class="mode" id="modeLabel">CLÁSSICO</div>
+    <div class="stat"><small>MOVIMENTOS</small><b id="moves">0</b></div>
+    <div class="stat"><small>TEMPO</small><b id="time">0:00.0</b></div>
+  </section>
+  <main id="boardWrap"><div id="board"></div><div id="overlay" class="hidden"></div></main>
+  <footer class="bar">
+    <button data-act="undo" class="btn gray">DESFAZER</button>
+    <button data-act="peek" class="btn gray">ESPIAR</button>
+    <button data-act="stats" class="btn gray">ESTATÍSTICAS</button>
+  </footer>
+</div>
+
+<div id="modal" class="modal hidden"><div class="card" id="modalCard"></div></div>
+
+<template id="tplSettings">
+  <h2>Configurações</h2>
+  <label>Modo de jogo
+    <select id="sMode">
+      <option value="classic">Clássico</option>
+      <option value="snake">Cobra (Snake)</option>
+      <option value="spiral">Espiral</option>
+      <option value="fringe">Cores em franjas</option>
+      <option value="hard">Difícil (sem números)</option>
+      <option value="reverse">Invertido (decrescente)</option>
+      <option value="columns">Colunas</option>
+      <option value="checker">Xadrez (cores)</option>
+    </select>
+  </label>
+  <label>Tamanho do tabuleiro
+    <select id="sSize"></select>
+  </label>
+  <label>Tema de cores
+    <select id="sTheme"></select>
+  </label>
+  <label>Formato dos blocos
+    <select id="sShape">
+      <option value="square">Quadrado</option>
+      <option value="round">Arredondado</option>
+      <option value="circle">Círculo</option>
+      <option value="flat">Plano (sem espaço)</option>
+      <option value="bevel">3D (relevo)</option>
+    </select>
+  </label>
+  <label>Dificuldade do embaralhamento
+    <select id="sShuffle">
+      <option value="easy">Fácil</option>
+      <option value="normal">Normal</option>
+      <option value="hard">Difícil</option>
+      <option value="insane">Extremo</option>
+    </select>
+  </label>
+  <label class="row"><span>Som</span><input type="checkbox" id="sSound"></label>
+  <label class="row"><span>Vibração</span><input type="checkbox" id="sVibe"></label>
+  <label class="row"><span>Animações</span><input type="checkbox" id="sAnim"></label>
+  <label class="row"><span>Mostrar números</span><input type="checkbox" id="sNums"></label>
+  <label class="row"><span>Mover várias peças de uma vez</span><input type="checkbox" id="sMulti"></label>
+  <div class="about">
+    <h3>Sobre</h3>
+    <p>Desenvolvido por: Willian R Rocha</p>
+    <p>Contato: <a href="mailto:willian.wrr1@gmail.com">willian.wrr1@gmail.com</a></p>
+    <p>Versão e data atual do aplicativo: <b id="verInfo"></b></p>
+  </div>
+  <div class="actions">
+    <button class="btn gray" data-close>Fechar</button>
+    <button class="btn red" id="applyBtn">Aplicar e novo jogo</button>
+  </div>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
