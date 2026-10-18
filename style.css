@@ -1,5 +1,5 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--bg:#1b2430;--panel:#2a3646;--text:#eef2f7;--t1:#4a6b8a;--t2:#e8973a;--t3:#4a9a5c;--t4:#b53a3a;--t5:#3f86c4;--empty:#10161e;--gap:6px}
+:root{--bg:#1b2430;--panel:#2a3646;--text:#eef2f7}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,Roboto,Arial,sans-serif;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
 #app{max-width:560px;margin:0 auto;height:100%;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom)}
 .bar{display:flex;gap:6px;padding:8px 0}
@@ -16,7 +16,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 .shape-flat .tile{border-radius:0;border:1px solid rgba(0,0,0,.25)}
 .shape-bevel .tile{border-radius:12%;box-shadow:inset 0 3px 3px rgba(255,255,255,.35),inset 0 -4px 4px rgba(0,0,0,.35),0 2px 4px rgba(0,0,0,.4)}
 .tile.peek{outline:3px solid #fff}
-#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,14,20,.85);font-size:26px;font-weight:800;text-align:center;border-radius:10px;width:min(100%,60vh);aspect-ratio:1;margin:auto;white-space:pre-line}
+#overlay{position:absolute;display:flex;align-items:center;justify-content:center;background:rgba(10,14,20,.88);font-size:24px;font-weight:800;text-align:center;border-radius:10px;width:min(100%,60vh);aspect-ratio:1;white-space:pre-line;padding:10px}
 .hidden{display:none!important}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:10}
 .card{background:#243040;border-radius:12px;padding:18px;width:min(92vw,480px);max-height:88vh;overflow:auto}
@@ -28,4 +28,4 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 .card a{color:#7cc4ff}.about{border-top:1px solid #3d4c61;margin-top:14px;font-size:14px}.about p{margin:4px 0}
 .actions{display:flex;gap:8px;margin-top:14px}
 table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px;border-bottom:1px solid #3d4c61;text-align:center}
-.win{font-size:15px;line-height:1.6}
+.hl td{background:#f1c40f;color:#1b2430;font-weight:800}

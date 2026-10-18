@@ -1,5 +1,5 @@
 "use strict";
-const APP_VERSION="1.0.0", APP_DATE="06/10/2026";
+const APP_VERSION="1.1.0", APP_DATE="18/10/2026";
 const THEMES={
  classic:{name:"Clássico",c:["#4a6b8a","#c9822f","#3f8a52","#a83838","#3a79b3"]},
  ocean:{name:"Oceano",c:["#0b6e8a","#1291b0","#2bb3c0","#0a4f73","#5ccfd6"]},
@@ -18,8 +18,15 @@ const defaults={mode:"classic",rows:4,cols:4,theme:"classic",shape:"round",shuff
 let cfg=Object.assign({},defaults,JSON.parse(localStorage.getItem("sp_cfg")||"{}"));
 let recs=JSON.parse(localStorage.getItem("sp_recs")||"{}");
 let stats=JSON.parse(localStorage.getItem("sp_stats")||"{}");
+let tops=JSON.parse(localStorage.getItem("sp_top")||"{}");
+let lastId=localStorage.getItem("sp_lastId"),lastKey=localStorage.getItem("sp_lastKey");
+Object.keys(recs).forEach(k=>{if(!tops[k])tops[k]=[{id:"m"+k,moves:recs[k].moves,time:recs[k].time,date:0}]});
 let S={grid:[],goalPos:[],moves:0,t0:0,elapsed:0,running:false,paused:false,over:false,hist:[],started:false};
-const save=()=>{localStorage.setItem("sp_cfg",JSON.stringify(cfg));localStorage.setItem("sp_recs",JSON.stringify(recs));localStorage.setItem("sp_stats",JSON.stringify(stats))};
+const save=()=>{
+ localStorage.setItem("sp_cfg",JSON.stringify(cfg));localStorage.setItem("sp_recs",JSON.stringify(recs));
+ localStorage.setItem("sp_stats",JSON.stringify(stats));localStorage.setItem("sp_top",JSON.stringify(tops));
+ if(lastId){localStorage.setItem("sp_lastId",lastId);localStorage.setItem("sp_lastKey",lastKey)}else{localStorage.removeItem("sp_lastId");localStorage.removeItem("sp_lastKey")}
+};
 
 function pathFor(mode,R,C){
  const p=[];
@@ -33,11 +40,11 @@ function pathFor(mode,R,C){
 function tileColor(n){
  const c=THEMES[cfg.theme].c,{rows:R,cols:C,mode}=cfg,pos=S.goalPos[n];
  const r=Math.floor(pos/C),k=pos%C;
- if(mode==="fringe"){const layer=Math.min(r,k);return c[layer%c.length]}
+ if(mode==="fringe")return c[Math.min(r,k)%c.length];
  if(mode==="checker")return c[(r+k)%2?1:0];
  if(mode==="hard")return c[4%c.length];
  if(mode==="snake")return c[r%c.length];
- if(mode==="spiral"){const layer=Math.min(r,k,R-1-r,C-1-k);return c[layer%c.length]}
+ if(mode==="spiral")return c[Math.min(r,k,R-1-r,C-1-k)%c.length];
  if(mode==="columns")return c[k%c.length];
  return c[(Math.floor((n-1)/C))%c.length];
 }
@@ -52,7 +59,7 @@ function newGame(){
   S.grid[e]=S.grid[m];S.grid[m]=0;prev=e;e=m;
  }
  Object.assign(S,{moves:0,elapsed:0,running:false,paused:false,over:false,hist:[],started:false,t0:0});
- $("#overlay").classList.add("hidden");
+ $("#overlay").classList.add("hidden");$("#pauseBtn").textContent="PAUSA";
  build();updateInfo();
 }
 function neighbors(i){const{rows:R,cols:C}=cfg,r=Math.floor(i/C),c=i%C,o=[];if(r>0)o.push(i-C);if(r<R-1)o.push(i+C);if(c>0)o.push(i-1);if(c<C-1)o.push(i+1);return o}
@@ -61,15 +68,12 @@ function build(){
  const b=$("#board"),{rows:R,cols:C}=cfg;
  b.className="shape-"+cfg.shape;document.body.classList.toggle("noanim",!cfg.anim);
  b.innerHTML="";
- const maxDim=Math.max(R,C);
  for(let n=1;n<R*C;n++){
   const d=document.createElement("div");d.className="tile";d.dataset.n=n;
   d.style.background=tileColor(n);
-  d.style.fontSize=(Math.min(100/R,100/C)*0.42)+"cqmin";
   if(cfg.nums&&cfg.mode!=="hard")d.textContent=n;
   b.appendChild(d);
  }
- b.style.containerType="size";
  layout();
 }
 function layout(){
@@ -109,6 +113,11 @@ function win(){
  if(!r.moves||S.moves<r.moves){r.moves=S.moves;msg+="\nNovo recorde de movimentos!"}
  if(!r.time||S.elapsed<r.time){r.time=S.elapsed;msg+="\nNovo recorde de tempo!"}
  recs[k]=r;
+ const entry={id:"g"+Date.now(),moves:S.moves,time:S.elapsed,date:Date.now()};
+ const list=(tops[k]||[]).concat(entry).sort((a,b)=>a.moves-b.moves||a.time-b.time).slice(0,10);
+ tops[k]=list;lastId=entry.id;lastKey=k;
+ const pos=list.findIndex(x=>x.id===entry.id);
+ if(pos>=0)msg+=`\n⭐ Entrou no Top 10: ${pos+1}º lugar`;
  const st=stats[k]||{games:0,moves:0,time:0};st.games++;st.moves+=S.moves;st.time+=S.elapsed;stats[k]=st;
  save();updateInfo();
  if(cfg.sound)[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.15),i*120));
@@ -137,7 +146,6 @@ function modal(html,init){const m=$("#modal"),c=$("#modalCard");c.innerHTML="";i
 function closeModal(){$("#modal").classList.add("hidden")}
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 function settings(){
- const wasRunning=S.running;
  modal(document.importNode($("#tplSettings").content,true),c=>{
   const sz=c.querySelector("#sSize");SIZES.forEach(([r,k])=>sz.add(new Option(`${r} × ${k}`,`${r}x${k}`)));
   const th=c.querySelector("#sTheme");Object.entries(THEMES).forEach(([k,v])=>th.add(new Option(v.name,k)));
@@ -154,13 +162,28 @@ function settings(){
   };
  });
 }
+const fmtDate=d=>d?new Date(d).toLocaleDateString("pt-BR")+" "+new Date(d).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"-";
+const keyLabel=k=>{const[m,s]=k.split("_");return MODE_NAMES[m]+" "+s};
+function top10Html(k){
+ const list=tops[k]||[];
+ const rows=list.map((e,i)=>`<tr class="${e.id===lastId?"hl":""}"><td>${e.id===lastId?"★ ":""}${i+1}º</td><td>${e.moves}</td><td>${fmt(e.time)}</td><td>${fmtDate(e.date)}</td></tr>`).join("")||'<tr><td colspan="4">Sem resultados ainda</td></tr>';
+ return`<table><tr><th>#</th><th>Mov.</th><th>Tempo</th><th>Data</th></tr>${rows}</table>`;
+}
+function topBlock(sel,box){
+ const keys=Object.keys(tops).sort();
+ if(!keys.length){sel.classList.add("hidden");box.innerHTML="<p>Sem resultados ainda</p>";return}
+ sel.innerHTML=keys.map(k=>`<option value="${k}">${keyLabel(k)}</option>`).join("");
+ sel.value=keys.includes(lastKey)?lastKey:(keys.includes(key())?key():keys[0]);
+ const draw=()=>box.innerHTML=top10Html(sel.value);sel.onchange=draw;draw();
+}
 function records(){
- const rows=Object.entries(recs).sort().map(([k,v])=>{const[m,s]=k.split("_");return`<tr><td>${MODE_NAMES[m]}</td><td>${s}</td><td>${v.moves}</td><td>${fmt(v.time)}</td></tr>`}).join("")||'<tr><td colspan="4">Sem recordes ainda</td></tr>';
- modal(`<h2>Recordes</h2><table><tr><th>Modo</th><th>Tam.</th><th>Mov.</th><th>Tempo</th></tr>${rows}</table><div class="actions"><button class="btn red" id="clr">Apagar</button><button class="btn gray" data-close>Fechar</button></div>`,c=>{c.querySelector("#clr").onclick=()=>{if(confirm("Apagar todos os recordes e estatísticas?")){recs={};stats={};save();closeModal()}}});
+ modal(`<h2>Recordes - Top 10</h2><label>Modo / tamanho<select id="topSel"></select></label><div id="topBox"></div><div class="actions"><button class="btn red" id="clr">Apagar</button><button class="btn gray" data-close>Fechar</button></div>`,c=>{
+  topBlock(c.querySelector("#topSel"),c.querySelector("#topBox"));
+  c.querySelector("#clr").onclick=()=>{if(confirm("Apagar todos os recordes e estatísticas?")){recs={};stats={};tops={};lastId=null;lastKey=null;save();closeModal()}}});
 }
 function showStats(){
- const rows=Object.entries(stats).sort().map(([k,v])=>{const[m,s]=k.split("_");return`<tr><td>${MODE_NAMES[m]}</td><td>${s}</td><td>${v.games}</td><td>${Math.round(v.moves/v.games)}</td><td>${fmt(v.time/v.games)}</td></tr>`}).join("")||'<tr><td colspan="5">Sem partidas ainda</td></tr>';
- modal(`<h2>Estatísticas</h2><table><tr><th>Modo</th><th>Tam.</th><th>Jogos</th><th>Méd. mov.</th><th>Méd. tempo</th></tr>${rows}</table><div class="actions"><button class="btn gray" data-close>Fechar</button></div>`);
+ const rows=Object.entries(stats).sort().map(([k,v])=>`<tr><td>${keyLabel(k)}</td><td>${v.games}</td><td>${Math.round(v.moves/v.games)}</td><td>${fmt(v.time/v.games)}</td></tr>`).join("")||'<tr><td colspan="4">Sem partidas ainda</td></tr>';
+ modal(`<h2>Estatísticas</h2><table><tr><th>Modo</th><th>Jogos</th><th>Méd. mov.</th><th>Méd. tempo</th></tr>${rows}</table><h3>Top 10 melhores resultados</h3><label><select id="topSel"></select></label><div id="topBox"></div><div class="actions"><button class="btn gray" data-close>Fechar</button></div>`,c=>topBlock(c.querySelector("#topSel"),c.querySelector("#topBox")));
 }
 document.addEventListener("click",e=>{
  const a=e.target.closest("[data-act]");if(a){({new:newGame,settings,records,pause,undo,peek,stats:showStats})[a.dataset.act]();return}

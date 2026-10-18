@@ -1,26 +1,23 @@
-# Slide Puzzle Pro (PWA)
+# Slide Puzzle Pro (PWA + APK)
 
-Jogo de puzzle deslizante (15 puzzle) em formato Progressive Web App.
+Jogo de puzzle deslizante (15 puzzle). Versão **1.1.0** — 18/10/2026.
+Desenvolvido por: Willian R Rocha — willian.wrr1@gmail.com
 
-- Versão: **1.0.0** — 06/10/2026
-- Desenvolvido por: Willian R Rocha — willian.wrr1@gmail.com
+## Publicar como site (GitHub Pages)
+Settings → Pages → Deploy from a branch → `main` / `(root)`.
 
-## Recursos
-- 8 modos: Clássico, Cobra, Espiral, Franjas, Difícil (sem números), Invertido, Colunas, Xadrez
-- 12 tamanhos (3×3 até 10×10, incluindo retangulares)
-- 8 temas de cores e 5 formatos de bloco
-- Dificuldade de embaralhamento (sempre solucionável)
-- Recordes, estatísticas, pausa, desfazer, espiar
-- Toque, deslize (swipe) e teclado; som e vibração
-- Funciona offline
+## Gerar o APK (offline, atualizável)
+1. Gere a chave uma única vez e guarde um backup:
+   `keytool -genkeypair -v -keystore release.jks -alias slidepuzzle -keyalg RSA -keysize 2048 -validity 10000`
+2. Converta para base64 (`base64 -w0 release.jks`) e crie em Settings → Secrets → Actions:
+   `KEYSTORE_BASE64`, `KS_PASS`, `KEY_PASS`, `KEY_ALIAS`.
+3. Aba Actions → "Build APK" → Run workflow. Baixe o APK em Artifacts.
+4. Instale no celular (permitir apps desconhecidos).
 
-## Publicar no GitHub Pages
-1. Crie um repositório e envie todos os arquivos desta pasta para a raiz.
-2. Settings → Pages → Branch `main` / `(root)` → Save.
-3. Abra `https://SEU-USUARIO.github.io/NOME-DO-REPO/` no celular e use "Instalar app".
+## Atualizações sem desinstalar
+Mesmo pacote (`com.willianrocha.slidepuzzle`), mesma chave e `versionCode` maior (automático via número da execução).
+Ao lançar versão nova: altere `APP_VERSION`/`APP_DATE` em `app.js`, a versão em `package.json` e o cache em `sw.js`; rode o workflow e instale por cima.
 
-## Atualizar versão
-Altere `APP_VERSION` e `APP_DATE` em `app.js` e o nome do cache em `sw.js`.
-
-## Licença
-MIT
+## Histórico
+- 1.1.0 (18/10/2026): Top 10 por modo/tamanho; empacotamento APK (Capacitor + GitHub Actions)
+- 1.0.0 (06/10/2026): versão inicial
