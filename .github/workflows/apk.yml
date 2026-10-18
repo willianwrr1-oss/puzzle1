@@ -45,15 +45,11 @@ jobs:
         env:
           KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
           KS_PASS: ${{ secrets.KS_PASS }}
-          KEY_PASS: ${{ secrets.KEY_PASS }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          for v in KS_B64 KS_PASS KEY_PASS KEY_ALIAS; do
-            if [ -z "${!v}" ]; then echo "Secret vazio: $v"; exit 1; fi
-          done
-          echo "$KS_B64" | base64 -d > release.jks
+          printf '%s' "$KS_B64" | tr -d ' \r\n' | base64 -d > release.jks
+          PASS=$(printf '%s' "$KS_PASS" | tr -d ' \r\n')
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
-          "$BT/apksigner" sign --ks release.jks --ks-pass "pass:$KS_PASS" --key-pass "pass:$KEY_PASS" --ks-key-alias "$KEY_ALIAS" --out SlidePuzzlePro.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$BT/apksigner" sign --ks release.jks --ks-pass "pass:$PASS" --key-pass "pass:$PASS" --ks-key-alias slidepuzzle --out SlidePuzzlePro.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - uses: actions/upload-artifact@v4
         with:
