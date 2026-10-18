@@ -1,3 +1,48 @@
+
+
+
+
+
+slide-puzzle-pwa-apk-v1.1.0
+ZIP
+Gerei o pacote completo em um único ZIP, slide-puzzle-pwa-apk-v1.1.0.zip. O ZIP abre sem erro, o JavaScript passa na checagem de sintaxe e o YAML do workflow é lido corretamente. Não testei o jogo rodando nem o build do APK.
+
+Conteúdo do ZIP
+Jogo (PWA): index.html, style.css, app.js, sw.js, manifest.webmanifest e a pasta icons/ com 3 ícones. Inclui o Top 10 com destaque do último jogo.
+
+Para o APK:
+
+package.json e capacitor.config.json (pacote com.willianrocha.slidepuzzle).
+
+.github/workflows/apk.yml, que compila e assina o APK. O versionCode sobe sozinho a cada execução.
+
+.gitignore, que impede o envio da chave por engano.
+
+Documentação: README.md com o passo a passo e LICENSE (MIT).
+
+A versão do jogo continua em 1.1.0 (18/10/2026), porque só mudou o empacotamento.
+
+O que fazer
+Extraia o ZIP e envie todos os arquivos para a raiz do repositório. Inclua a pasta oculta .github, que costuma ficar de fora no upload pelo navegador. Se isso acontecer, crie o arquivo apk.yml direto no GitHub, em Add file → Create new file, digitando o caminho .github/workflows/apk.yml.
+
+Crie a chave (release.jks) e os 4 secrets, como descrito no README.md: KEYSTORE_BASE64, KS_PASS, KEY_PASS e KEY_ALIAS.
+
+Na aba Actions, rode "Build APK" e baixe o arquivo em Artifacts.
+
+Guarde um backup da chave. Sem ela você não consegue atualizar o app por cima e precisa desinstalar.
+
+Code generated image
+Code generated image
+Code generated image
+enviar apk.yml completo
+
+
+
+apk
+YAML
+Aqui está o apk.yml completo e corrigido. Ele vai também como arquivo anexo, e o YAML foi validado (10 etapas, sem erro de formato). Cole o conteúdo no arquivo .github/workflows/apk.yml.
+
+text
 name: Build APK
 on:
   workflow_dispatch:
@@ -10,7 +55,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: 17 }
       - run: npm install
       - run: |
@@ -28,13 +73,73 @@ jobs:
       - name: Assinar
         env:
           KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KS_PASS }}
+          KEY_PASS: ${{ secrets.KEY_PASS }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
+          for v in KS_B64 KS_PASS KEY_PASS KEY_ALIAS; do
+            if [ -z "${!v}" ]; then echo "Secret vazio: $v"; exit 1; fi
+          done
           echo "$KS_B64" | base64 -d > release.jks
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
-          $BT/apksigner sign --ks release.jks \
-            --ks-pass pass:${{ secrets.KS_PASS }} --key-pass pass:${{ secrets.KEY_PASS }} \
-            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
-            --out SlidePuzzlePro.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$BT/apksigner" sign --ks release.jks --ks-pass "pass:$KS_PASS" --key-pass "pass:$KEY_PASS" --ks-key-alias "$KEY_ALIAS" --out SlidePuzzlePro.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SlidePuzzlePro-apk
+          path: SlidePuzzlePro.apk
+Mudanças em relação à versão anterior
+A etapa "Assinar" agora lê os secrets por variáveis e usa aspas. Se algum secret estiver vazio, o log mostra "Secret vazio: NOME" e para, em vez de dar o erro confuso.
+
+O setup-java passou para a versão 5, o que elimina um dos avisos amarelos.
+
+Depois de salvar, rode Run workflow de novo. Se aparecer "Secret vazio", crie ou corrija esse secret e rode outra vez.
+
+Quais secrets preciso criar no repositório
+Como gerar o keystore base64 no terminal
+Como testar o workflow no GitHub Actions
+Meu APK foi gerado, onde encontro ele
+Onde configuro o alias do keystore
+apk
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 17 }
+      - run: npm install
+      - run: |
+          mkdir www
+          cp index.html style.css app.js sw.js manifest.webmanifest www/
+          cp -r icons www/
+      - run: |
+          npx cap add android
+          npx cap sync android
+      - name: Versão
+        run: |
+          VN=$(node -p "require('./package.json').version")
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$VN\"/" android/app/build.gradle
+      - run: cd android && ./gradlew assembleRelease
+      - name: Assinar
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KS_PASS }}
+          KEY_PASS: ${{ secrets.KEY_PASS }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          for v in KS_B64 KS_PASS KEY_PASS KEY_ALIAS; do
+            if [ -z "${!v}" ]; then echo "Secret vazio: $v"; exit 1; fi
+          done
+          echo "$KS_B64" | base64 -d > release.jks
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" sign --ks release.jks --ks-pass "pass:$KS_PASS" --key-pass "pass:$KEY_PASS" --ks-key-alias "$KEY_ALIAS" --out SlidePuzzlePro.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
       - uses: actions/upload-artifact@v4
         with:
           name: SlidePuzzlePro-apk
